@@ -17,18 +17,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         speedometer = findViewById<SpeedometerView>(R.id.speedometer)
-        speedometer?.setMaxSpeed(200.0)
+        speedometer?.setMaxSpeed(220.0)
         speedometer?.setLabelConverter(object : SpeedometerView.LabelConverter {
             override fun getLabelFor(progress: Double, maxProgress: Double): String {
-                return progress.toString()
+                return progress.toInt().toString()
             }
         })
         speedometer?.setMajorTickStep(20.0)
         speedometer?.setMinorTicks(1)
         speedometer?.addColoredRange(0.0, 120.0, Color.GREEN)
         speedometer?.addColoredRange(120.0, 180.0, Color.YELLOW)
-        speedometer?.addColoredRange(180.0, 200.0, Color.RED)
-        speedometer?.setSpeed(90.0, 1000, 10)
+        speedometer?.addColoredRange(180.0, 220.0, Color.RED)
+        speedometer?.setSpeed(210.0, 1000, 10)
 
         btnStopGenerate.setOnClickListener {
             speedometer?.stopGenerate()

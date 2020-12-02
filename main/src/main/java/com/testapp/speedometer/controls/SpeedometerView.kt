@@ -140,8 +140,8 @@ class SpeedometerView: View {
         var begin = beginInput
         var end = endInput
         require(begin < end) { "Incorrect number range specified!" }
-        if (begin < -5.0 / 160 * maxSpeed) begin = -5.0 / 160 * maxSpeed
-        if (end > maxSpeed * (5.0 / 160 + 1)) end = maxSpeed * (5.0 / 160 + 1)
+        if (begin < -5.0 / 180 * maxSpeed) begin = -5.0 / 180 * maxSpeed
+        if (end > maxSpeed * (5.0 / 180 + 1)) end = maxSpeed * (5.0 / 180 + 1)
         ranges.add(ColoredRange(color, begin, end))
         invalidate()
     }
@@ -163,6 +163,7 @@ class SpeedometerView: View {
     {
         generateService?.stopGenerate()
     }
+
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -210,14 +211,14 @@ class SpeedometerView: View {
             height = 0
         }
 
-        setMeasuredDimension(width, height)
+        setMeasuredDimension(width, (1.5 * height).toInt())
     }
 
     private fun drawNeedle(canvas: Canvas) {
         val oval = getOval(canvas, 1f)
-        val radius = oval.width() * 0.35f + 10
+        val radius = oval.width() * 0.48f
         val smallOval = getOval(canvas, 0.2f)
-        val angle = 10 + (speed / maxSpeed * 160).toFloat()
+        val angle = (speed / maxSpeed * AVAILABLE_ANGLE).toFloat() + INIT_DELTA_ANGLE
         val cosAngle = cos((180 - angle) / 180 * Math.PI)
         val sinAngle = sin(angle / 180 * Math.PI)
         canvas.drawLine(
@@ -227,20 +228,19 @@ class SpeedometerView: View {
                 (oval.centerY() - sinAngle * radius).toFloat(),
                 needlePaint!!
         )
-        canvas.drawArc(smallOval, 180f, 180f, true, backgroundPaint!!)
+        canvas.drawArc(smallOval, 360f, 360f, true, backgroundPaint!!)
     }
 
     private fun drawTicks(canvas: Canvas) {
-        val availableAngle = 160f
-        val majorStep = (majorTickStep / maxSpeed * availableAngle).toFloat()
+        val majorStep = (majorTickStep / maxSpeed * AVAILABLE_ANGLE).toFloat()
         val minorStep = majorStep / (1 + minorTicks)
-        val majorTicksLength = 30f
+        val majorTicksLength = 60f
         val minorTicksLength = majorTicksLength / 2
         val oval = getOval(canvas, 1f)
-        val radius = oval.width() * 0.35f
-        var currentAngle = 10f
+        val radius = oval.width() * 0.45f
+        var currentAngle = INIT_DELTA_ANGLE
         var curProgress = 0.0
-        while (currentAngle <= 170) {
+        while (currentAngle <= AVAILABLE_ANGLE) {
             val cosAngle = cos((180 - currentAngle) / 180 * Math.PI)
             val sinAngle = sin(currentAngle / 180 * Math.PI)
             canvas.drawLine(
@@ -254,7 +254,7 @@ class SpeedometerView: View {
                 val angle = currentAngle + i * minorStep
                 val minorCosAngle = cos((180 - angle) / 180 * Math.PI)
                 val minorSinAngle = sin(angle / 180 * Math.PI)
-                if (angle >= 170 + minorStep / 2) {
+                if (angle >= AVAILABLE_ANGLE + minorStep / 2) {
                     break
                 }
                 canvas.drawLine(
@@ -268,7 +268,7 @@ class SpeedometerView: View {
             if (labelConverter != null) {
                 canvas.save()
                 canvas.rotate(180 + currentAngle, oval.centerX(), oval.centerY())
-                val txtX = oval.centerX() + radius + majorTicksLength / 2 + 8
+                val txtX = oval.centerX() + radius - majorTicksLength - 5
                 val txtY = oval.centerY()
                 canvas.rotate(+90f, txtX, txtY)
                 canvas.drawText(
@@ -282,15 +282,15 @@ class SpeedometerView: View {
             currentAngle += majorStep
             curProgress += majorTickStep
         }
-        val smallOval = getOval(canvas, 0.7f)
+        val smallOval = getOval(canvas, 0.98f)
         colorLinePaint!!.color = defaultColor
-        canvas.drawArc(smallOval, 185f, 170f, false, colorLinePaint!!)
+        canvas.drawArc(smallOval, 180f, 180f, false, colorLinePaint!!)
         for (range in ranges) {
             colorLinePaint!!.color = range.color
             canvas.drawArc(
                     smallOval,
-                    (190 + range.begin / maxSpeed * 160).toFloat(),
-                    ((range.end - range.begin) / maxSpeed * 160).toFloat(),
+                    (160 + range.begin / maxSpeed * AVAILABLE_ANGLE).toFloat(),
+                    ((range.end - range.begin) / maxSpeed * AVAILABLE_ANGLE).toFloat(),
                     false,
                     colorLinePaint!!
             )
@@ -308,7 +308,7 @@ class SpeedometerView: View {
         }
         oval.offset(
                 (canvasWidth - oval.width()) / 2 + paddingLeft,
-                (canvasHeight * 2 - oval.height()) / 2 + paddingTop
+                (canvasHeight * 2 - oval.height()) / 2 + paddingTop + DELTA_FOR_Y_OFFSET
         )
         return oval
     }
@@ -316,25 +316,39 @@ class SpeedometerView: View {
     private fun init(context: Context?) {
         setLayerType(LAYER_TYPE_HARDWARE, null)
         backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        backgroundPaint!!.style = Paint.Style.FILL
-        backgroundPaint!!.color = Color.rgb(127, 127, 127)
+        backgroundPaint?.apply {
+            backgroundPaint!!.style = Paint.Style.FILL
+            backgroundPaint!!.color = Color.rgb(127, 127, 127)
+        }
+
         txtPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        txtPaint!!.color = Color.WHITE
-        txtPaint!!.textSize = labelTextSize.toFloat()
-        txtPaint!!.textAlign = Paint.Align.CENTER
-        txtPaint!!.isLinearText = true
+        txtPaint?.apply {
+            color = Color.WHITE
+            textSize = labelTextSize.toFloat()
+            textAlign = Paint.Align.CENTER
+            isLinearText = true
+        }
+
         ticksPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        ticksPaint!!.strokeWidth = 3.0f
-        ticksPaint!!.style = Paint.Style.STROKE
-        ticksPaint!!.color = defaultColor
+        ticksPaint?.apply {
+            strokeWidth = 3.0f
+            style = Paint.Style.STROKE
+            color = defaultColor
+        }
+
         colorLinePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        colorLinePaint!!.style = Paint.Style.STROKE
-        colorLinePaint!!.strokeWidth = 5f
-        colorLinePaint!!.color = defaultColor
+        colorLinePaint?.apply {
+            style = Paint.Style.STROKE
+            strokeWidth = 5f
+            color = defaultColor
+        }
+
         needlePaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        needlePaint!!.strokeWidth = 5f
-        needlePaint!!.style = Paint.Style.STROKE
-        needlePaint!!.color = Color.argb(200, 255, 0, 0)
+        needlePaint?.apply {
+            strokeWidth = 5f
+            style = Paint.Style.STROKE
+            color = Color.argb(200, 255, 0, 0)
+        }
 
         val intent = Intent(context, GenerateService::class.java)
         context?.bindService(intent, connectionService, Context.BIND_AUTO_CREATE)
@@ -361,5 +375,9 @@ class SpeedometerView: View {
         const val DEFAULT_MAJOR_TICK_STEP = 20.0
         const val DEFAULT_MINOR_TICKS = 1
         const val DEFAULT_LABEL_TEXT_SIZE_DP = 12
+
+        const val AVAILABLE_ANGLE = 220f
+        const val INIT_DELTA_ANGLE = -20f
+        const val DELTA_FOR_Y_OFFSET = -180f
     }
 }

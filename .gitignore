@@ -1,32 +1,26 @@
-# Prerequisites
-*.d
+# built application files
+*.apk
+*.ap_
+*.gradle
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+# files for the dex VM
+*.dex
 
-# Precompiled Headers
-*.gch
-*.pch
+# Java class files
+*.class
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+# generated files
+bin/
+gen/
+out/
+target/
 
-# Fortran module files
-*.mod
-*.smod
+# Local configuration file (sdk path, etc)
+local.properties
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+# IntelliJ files
+.idea
+*.iml
 
-# Executables
-*.exe
-*.out
-*.app
+# C++ build files
+*.cxx
