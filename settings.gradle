@@ -1,0 +1,2 @@
+include ':service', ':main', ':app'
+rootProject.name = "SpeedometerTestapp"
