@@ -1,7 +1,6 @@
 #include <cmath>
 #include <ctime>
 #include <future>
-#include <math.h>
 #include <random>
 #include <stdexcept>
 
@@ -13,10 +12,15 @@ namespace generate_service
 namespace
 {
 
-int get_random_number()
+int get_random_number(int max_generated_value)
 {
+	if (max_generated_value <= 0)
+	{
+		return max_generated_value;
+	}
+
 	std::mt19937 gen(time(0));
-	std::uniform_int_distribution<> uid(100, 200);
+	std::uniform_int_distribution<> uid(max_generated_value / 2, max_generated_value);
 	return uid(gen);
 }
 
@@ -29,11 +33,6 @@ NeedlePositionGenerator & NeedlePositionGenerator::Instance()
 {
 	static NeedlePositionGenerator generator;
 	return generator;
-}
-
-NeedlePositionGenerator::NeedlePositionGenerator()
-	: init_value_(get_random_number())
-{
 }
 
 void NeedlePositionGenerator::set_enviroment(JNIEnv * jni_env, jobject generate_service, double max_generated_value)
@@ -49,6 +48,7 @@ void NeedlePositionGenerator::set_enviroment(JNIEnv * jni_env, jobject generate_
 	jclass j_class = jni_env->GetObjectClass(generate_service);
 	on_value_changed_ = jni_env->GetMethodID(j_class, "onValueChanged", "(I)V");
 	max_generated_value_ = max_generated_value;
+	init_value_ = get_random_number(max_generated_value_);
 }
 
 void NeedlePositionGenerator::start_generate()

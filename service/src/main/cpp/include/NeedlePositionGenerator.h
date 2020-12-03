@@ -21,7 +21,7 @@ public:
 	void stop_generate();
 
 private:
-	NeedlePositionGenerator();
+	NeedlePositionGenerator() = default;
 
 private:
 	[[nodiscard]] JNIEnv * get_jni_env();
@@ -32,7 +32,7 @@ private:
 	jobject object_ref_;
 
 private:
-	const int init_value_;
+	int init_value_{0};
 
 	double max_generated_value_{0.0};
 
